@@ -45,6 +45,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/package.json /workspace/package.j
 COPY --from=builder --chown=nextjs:nodejs /app/pnpm-lock.yaml /workspace/pnpm-lock.yaml
 COPY --from=builder --chown=nextjs:nodejs /app/pnpm-workspace.yaml /workspace/pnpm-workspace.yaml
 COPY --chown=nextjs:nodejs --chmod=755 docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh
 
 USER nextjs
 EXPOSE 3000
