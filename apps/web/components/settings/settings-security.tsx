@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { twoFactor } from "@/lib/auth-client"
@@ -222,18 +223,29 @@ export function SettingsSecurity() {
 
               {/* 验证码输入 */}
               <div className="space-y-2">
-                <Label htmlFor="totp-verify">{t.twoFactor.enterCode}</Label>
-                <Input
-                  autoFocus
-                  disabled={loading}
-                  id="totp-verify"
-                  inputMode="numeric"
-                  maxLength={6}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-                  onKeyDown={(e) => e.key === "Enter" && handleVerifyAndEnable()}
-                  placeholder={t.twoFactor.codePlaceholder}
-                  value={code}
-                />
+                <Label>{t.twoFactor.enterCode}</Label>
+                <div className="flex justify-center">
+                  <InputOTP
+                    autoFocus
+                    disabled={loading}
+                    maxLength={6}
+                    onChange={setCode}
+                    onKeyDown={(e) => e.key === "Enter" && handleVerifyAndEnable()}
+                    value={code}
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                    </InputOTPGroup>
+                    <InputOTPSeparator />
+                    <InputOTPGroup>
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
               </div>
               <div className="flex justify-end gap-2">
                 <Button disabled={loading} onClick={closeEnableDialog} variant="outline">

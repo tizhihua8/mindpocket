@@ -1,11 +1,12 @@
 "use client"
 
+import { REGEXP_ONLY_DIGITS_AND_CHARS } from "input-otp"
 import { Loader2 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { Field, FieldGroup } from "@/components/ui/field"
+import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp"
 import { twoFactor } from "@/lib/auth-client"
 import { isPendingTwoFactorStateError } from "@/lib/auth-flow"
 import { useT } from "@/lib/i18n"
@@ -38,10 +39,12 @@ export function TwoFactorForm({ nextPath, onBackToLogin }: TwoFactorFormProps) {
     e.preventDefault()
     setLoading(true)
 
+    // 备用码 InputOTP 存 10 位字符，API 需要 XXXXX-XXXXX 格式
+    const submittedCode = mode === "totp" ? code : `${code.slice(0, 5)}-${code.slice(5)}`
     const result =
       mode === "totp"
-        ? await twoFactor.verifyTotp({ code })
-        : await twoFactor.verifyBackupCode({ code })
+        ? await twoFactor.verifyTotp({ code: submittedCode })
+        : await twoFactor.verifyBackupCode({ code: submittedCode })
 
     setLoading(false)
 
@@ -63,7 +66,8 @@ export function TwoFactorForm({ nextPath, onBackToLogin }: TwoFactorFormProps) {
   }
 
   const isTotp = mode === "totp"
-  const isSubmittable = isTotp ? code.length === 6 : code.length === 11
+  // 备用码 OTP 槽为 10 位（提交时补 "-"），TOTP 为 6 位
+  const isSubmittable = isTotp ? code.length === 6 : code.length === 10
 
   return (
     <form onSubmit={handleSubmit}>
@@ -76,38 +80,56 @@ export function TwoFactorForm({ nextPath, onBackToLogin }: TwoFactorFormProps) {
         </div>
 
         <Field>
-          <FieldLabel htmlFor="auth-code">
-            {isTotp ? t.twoFactor.enterCode : t.twoFactor.backupCodes}
-          </FieldLabel>
-          {isTotp ? (
-            <Input
-              autoComplete="one-time-code"
-              autoFocus
-              disabled={loading}
-              id="auth-code"
-              inputMode="numeric"
-              maxLength={6}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-              placeholder={t.twoFactor.codePlaceholder}
-              value={code}
-            />
-          ) : (
-            <Input
-              autoFocus
-              disabled={loading}
-              id="auth-code"
-              maxLength={11}
-              onChange={(e) => setCode(e.target.value)}
-              placeholder={t.twoFactor.backupCodePlaceholder}
-              value={code}
-            />
-          )}
+          <div className="flex justify-center">
+            {isTotp ? (
+              <InputOTP autoFocus disabled={loading} maxLength={6} onChange={setCode} value={code}>
+                <InputOTPGroup>
+                  <InputOTPSlot className="h-12 w-12 text-lg" index={0} />
+                  <InputOTPSlot className="h-12 w-12 text-lg" index={1} />
+                  <InputOTPSlot className="h-12 w-12 text-lg" index={2} />
+                </InputOTPGroup>
+                <InputOTPSeparator />
+                <InputOTPGroup>
+                  <InputOTPSlot className="h-12 w-12 text-lg" index={3} />
+                  <InputOTPSlot className="h-12 w-12 text-lg" index={4} />
+                  <InputOTPSlot className="h-12 w-12 text-lg" index={5} />
+                </InputOTPGroup>
+              </InputOTP>
+            ) : (
+              <InputOTP
+                autoFocus
+                disabled={loading}
+                maxLength={10}
+                onChange={setCode}
+                pattern={REGEXP_ONLY_DIGITS_AND_CHARS}
+                value={code}
+              >
+                <InputOTPGroup>
+                  <InputOTPSlot className="h-12 w-9 text-base" index={0} />
+                  <InputOTPSlot className="h-12 w-9 text-base" index={1} />
+                  <InputOTPSlot className="h-12 w-9 text-base" index={2} />
+                  <InputOTPSlot className="h-12 w-9 text-base" index={3} />
+                  <InputOTPSlot className="h-12 w-9 text-base" index={4} />
+                </InputOTPGroup>
+                <InputOTPSeparator />
+                <InputOTPGroup>
+                  <InputOTPSlot className="h-12 w-9 text-base" index={5} />
+                  <InputOTPSlot className="h-12 w-9 text-base" index={6} />
+                  <InputOTPSlot className="h-12 w-9 text-base" index={7} />
+                  <InputOTPSlot className="h-12 w-9 text-base" index={8} />
+                  <InputOTPSlot className="h-12 w-9 text-base" index={9} />
+                </InputOTPGroup>
+              </InputOTP>
+            )}
+          </div>
         </Field>
 
         <Field>
-          <Button className="w-full" disabled={loading || !isSubmittable} type="submit">
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t.twoFactor.verify}
-          </Button>
+          <div className="flex justify-center">
+            <Button className="px-10" disabled={loading || !isSubmittable} type="submit">
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t.twoFactor.verify}
+            </Button>
+          </div>
         </Field>
 
         <div className="flex flex-col items-center gap-1.5 text-center">
